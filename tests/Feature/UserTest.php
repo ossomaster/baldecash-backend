@@ -38,6 +38,29 @@ class UserTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_list_users_is_ordered_descending_by_created_at()
+    {
+        // create a user with role 'administrador'
+        $administrador = User::factory()->create([
+            'role' => User::ROLES['administrador'],
+            'created_at' => now()->subDays(1)
+        ]);
+
+        // create a user
+        $user = User::factory()->create();
+
+        // acting as 'administrador'
+        Sanctum::actingAs($administrador);
+        $response = $this->getJson('/api/users');
+
+        $response->assertStatus(200);
+
+        $users = $response->json()['users'];
+
+        // check if users are ordered descending by created_at
+        $this->assertEquals($user->id, $users[0]['id']);
+    }
+
     public function test_store_user_as_administrador()
     {
         // create a user with role 'administrador'

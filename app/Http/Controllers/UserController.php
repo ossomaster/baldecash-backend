@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Mail\AccountCreated;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 use function Ramsey\Uuid\v1;
 
@@ -33,6 +36,17 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $user = User::create($validated);
+
+        // TODO: usar colas para mejorar tiempo de respuesta
+        try {
+            Mail::to($user)->send(new AccountCreated($user, $validated['password']));
+        } catch (\Throwable $th) {
+
+            Log::error('Error al enviar mail', [
+                'user' => $user,
+                'exception' => $th,
+            ]);
+        }
 
         return response()->json([
             'user' => $user,

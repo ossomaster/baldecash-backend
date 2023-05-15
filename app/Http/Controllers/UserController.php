@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 
+use function Ramsey\Uuid\v1;
+
 class UserController extends Controller
 {
     /**
@@ -63,6 +65,13 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+
+        if (auth()->user()->id == $user->id) {
+            return response()->json([
+                'message' => 'No puedes eliminar tu propia cuenta',
+            ], 403);
+        }
+
         $user->delete();
 
         return response()->noContent();

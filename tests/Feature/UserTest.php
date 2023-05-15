@@ -5,26 +5,49 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_list_users()
+    public function test_list_users_as_administrador()
     {
+        // create a user with role 'administrador'
+        $administrador = User::factory()->create([
+            'role' => User::ROLES['administrador']
+        ]);
+
+        // acting as 'administrador'
+        Sanctum::actingAs($administrador);
         $response = $this->getJson('/api/users');
         $response->assertStatus(200);
     }
 
     public function test_list_users_as_revisor()
     {
+        // create a user with role 'revisor'
+        $revisor = User::factory()->create([
+            'role' => User::ROLES['revisor']
+        ]);
+
+        // acting as 'revisor'
+        Sanctum::actingAs($revisor);
         $response = $this->getJson('/api/users');
         $response->assertStatus(200);
     }
 
-    public function test_store_user()
+    public function test_store_user_as_administrador()
     {
+        // create a user with role 'administrador'
+        $administrador = User::factory()->create([
+            'role' => User::ROLES['administrador']
+        ]);
+
+        // acting as 'administrador'
+        Sanctum::actingAs($administrador);
+
         $formData = User::factory()->make()->toArray();
         $formData['password'] = 'password';
         $formData['password_confirmation'] = 'password';
@@ -46,19 +69,24 @@ class UserTest extends TestCase
         ]);
     }
 
-    public function test_update_user()
+    public function test_update_user_as_administrador()
     {
+        // create a user with role 'administrador'
+        $administrador = User::factory()->create([
+            'role' => User::ROLES['administrador']
+        ]);
+
         // create a user to be updated
         $user = User::factory()->create();
 
-        // create another user to be used as email
-        $anotherUser = User::factory()->create();
+        // acting as 'administrador'
+        Sanctum::actingAs($administrador);
 
         $formData = $user->toArray();
 
         // check if email can't be repeated
         $wrongFormData = $formData;
-        $wrongFormData['email'] = $anotherUser->email;
+        $wrongFormData['email'] = $administrador->email;
 
         $response = $this->putJson('/api/users/' . $user->id, $wrongFormData);
         $response->assertStatus(422);
@@ -75,10 +103,22 @@ class UserTest extends TestCase
         ]);
     }
 
-    public function test_delete_user()
+    public function test_delete_user_as_administrador()
     {
+        // create a user with role 'administrador'
+        $administrador = User::factory()->create([
+            'role' => User::ROLES['administrador']
+        ]);
+
         // create a user to be deleted
         $user = User::factory()->create();
+
+        // acting as 'administrador'
+        Sanctum::actingAs($administrador);
+
+        // check if user can delete himself
+        $response = $this->deleteJson('/api/users/' . $administrador->id);
+        $response->assertStatus(403);
 
         // delete a user
         $response = $this->deleteJson('/api/users/' . $user->id);
@@ -90,4 +130,48 @@ class UserTest extends TestCase
         ]);
     }
 
+    function test_revisor_cannot_store_user()
+    {
+        // create a user with role 'revisor'
+        $revisor = User::factory()->create([
+            'role' => User::ROLES['revisor']
+        ]);
+
+        // acting as 'revisor'
+        Sanctum::actingAs($revisor);
+
+        // try to create a user
+        $response = $this->postJson('/api/users', []);
+        $response->assertStatus(403);
+    }
+
+    function test_revisor_cannot_update_user()
+    {
+        // create a user with role 'revisor'
+        $revisor = User::factory()->create([
+            'role' => User::ROLES['revisor']
+        ]);
+
+        // acting as 'revisor'
+        Sanctum::actingAs($revisor);
+
+        // try to update a user
+        $response = $this->putJson('/api/users/' . $revisor->id, []);
+        $response->assertStatus(403);
+    }
+
+    function test_revisor_cannot_delete_user()
+    {
+        // create a user with role 'revisor'
+        $revisor = User::factory()->create([
+            'role' => User::ROLES['revisor']
+        ]);
+
+        // acting as 'revisor'
+        Sanctum::actingAs($revisor);
+
+        // try to delete a user
+        $response = $this->deleteJson('/api/users/' . $revisor->id);
+        $response->assertStatus(403);
+    }
 }

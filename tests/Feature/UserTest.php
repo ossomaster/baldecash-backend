@@ -85,7 +85,7 @@ class UserTest extends TestCase
         $response->assertNoContent();
 
         // check if user was deleted
-        $this->assertDatabaseMissing('users', [
+        $this->assertSoftDeleted('users', [
             'id' => $user->id
         ]);
     }

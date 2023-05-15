@@ -19,3 +19,7 @@
 | :------------------ | :------------------------ |
 | `php artisan serve` | Inicializa el servidor    |
 | `php artisan test`  | Ejecuta todas las pruebas |
+
+## Consideraciones
+
+-   La contraseña por defecto para las cuentas aleatorias es: `password`

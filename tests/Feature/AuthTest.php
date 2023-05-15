@@ -55,4 +55,26 @@ class AuthTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_user_cannot_request_with_deleted_account()
+    {
+        // create a user
+        $user = User::factory()->create();
+
+        // authenticate
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertOk();
+
+        // delete user
+        $user->delete();
+
+        // request
+        Sanctum::actingAs($user);
+        $response = $this->getJson('/api/users');
+        $response->assertStatus(401);
+    }
 }
